@@ -1,5 +1,5 @@
 import Image from "next/image";
-import AIChatComponent from "../components/AIChatComponent";
+import AIChatComponent from "@/components/AIChatComponent";
 
 export default function Home() {
   return (

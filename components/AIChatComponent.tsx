@@ -49,14 +49,15 @@ export default function AIChatComponent() {
       });
 
       if (!response.ok) {
-        throw new Error('API request failed');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'API request failed');
       }
 
       const assistantMessage = await response.json();
       setMessages([...newMessages, assistantMessage]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error calling chat API:', error);
-      setMessages([...newMessages, { role: 'assistant', content: '抱歉，发生了一个错误。请稍后再试。' }]);
+      setMessages([...newMessages, { role: 'assistant', content: `抱歉，发生了一个错误：${error.message}` }]);
     } finally {
       setIsLoading(false);
     }
