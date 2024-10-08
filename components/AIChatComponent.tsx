@@ -40,21 +40,35 @@ export default function AIChatComponent() {
     setInput('');
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 180000); // 3分钟超时
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ messages: newMessages }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'API request failed');
+        throw new Error('API request failed');
       }
 
-      const assistantMessage = await response.json();
-      setMessages([...newMessages, assistantMessage]);
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let assistantMessage = { role: 'assistant', content: '' };
+
+      while (true) {
+        const { done, value } = await reader!.read();
+        if (done) break;
+        const chunk = decoder.decode(value);
+        assistantMessage.content += chunk;
+        setMessages([...newMessages, { ...assistantMessage }]);
+      }
     } catch (error: any) {
       console.error('Error calling chat API:', error);
       setMessages([...newMessages, { role: 'assistant', content: `抱歉，发生了一个错误：${error.message}` }]);
